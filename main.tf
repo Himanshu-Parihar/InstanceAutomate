@@ -1,7 +1,7 @@
 provider "aws" {
   region = "ap-south-1"
 }
-#Assuming Access creds are already saved on the server hosting this script
+# Assuming Access creds are already saved on the server hosting this script
 
 # Policy for Lambda execution role
 resource "aws_iam_policy" "lambda_policy" {
@@ -13,6 +13,7 @@ resource "aws_iam_policy" "lambda_policy" {
         Effect   = "Allow",
         Action   = [
           "ec2:StartInstances",
+	  "ec2:StopInstances",
           "ec2:StopInstances"
         ],
         Resource = "*"
@@ -45,8 +46,14 @@ resource "aws_lambda_function" "start_ec2_instances" {
   filename      = "start_ec2.zip"
   function_name = "start_ec2_instances"
   role          = aws_iam_role.lambda_role.arn
-  handler       = "index.lambda_handler"
+  handler       = "lambda_function.lambda_handler"
   runtime       = "python3.10"
+  environment {
+    variables = {
+      tag_key   = var.ec2_tag_key
+      tag_value = var.ec2_tag_value
+    }
+  }
 }
 
 # Lambda to stop instances
@@ -54,8 +61,14 @@ resource "aws_lambda_function" "stop_ec2_instances" {
   filename      = "stop_ec2.zip"
   function_name = "stop_ec2_instances"
   role          = aws_iam_role.lambda_role.arn
-  handler       = "index.lambda_handler"
+  handler       = "lambda_function.lambda_handler"
   runtime       = "python3.10"
+  environment {
+    variables = {
+      tag_key   = var.ec2_tag_key
+      tag_value = var.ec2_tag_value
+    }
+  }
 }
 
 # Events Rule for starting EC2 instances
